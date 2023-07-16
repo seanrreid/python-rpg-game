@@ -6,6 +6,11 @@ In this simple RPG game, the hero fights the goblin. He has the options to:
 3. flee
 
 """
+import colorama
+import random
+
+color = colorama.Fore
+
 class Entity:
     def __init__(self, name:str, health:int, power:int):
         self.name = name
@@ -22,10 +27,10 @@ class Entity:
         """
         self.health -= other.power
         if self.health <= 0:
-            print(f"{self.name} got hit by {other.name} with a deadly attack")
+            print(f"{color.MAGENTA}{self.name} {color.RED}got hit by {color.MAGENTA}{other.name} {color.RED}with a deadly attack{color.RESET}")
             self.alive = False
-            return
-        print(f"{self.name} got attacked by {other.name} losing {other.power} hp")
+        else:
+            print(f"{color.MAGENTA}{self.name} {color.YELLOW}got attacked by {color.MAGENTA}{other.name} {color.YELLOW}losing {color.RED}{other.power} {color.YELLOW}hp{color.RESET}")
 
     def attack(self, other):
         """
@@ -34,11 +39,45 @@ class Entity:
         Args:
             other (Entity): the other entity to deal damage on
         """
+        if not self.alive:
+            return # cant attack if Entity is dead
         other.take_damage(self)
 
-    @property
-    def stats(self) -> tuple:
-        return self.health, self.power
+    def do_nothing(self, other):
+        """
+        Show if Entity missed a chance on other by doing nothing
+
+        Args:
+            other (Entity): the other that this Entity could have attacked
+        """
+        if other.health-self.power <= 0: # missed a chance
+            print(f"{color.MAGENTA}{self.name} {color.RED} missed his chance to kill {color.MAGENTA}{other.name}{color.RESET}")
+        else:
+            print(f"{color.MAGENTA}{self.name} {color.YELLOW}did nothing on this round{color.RESET}")
+
+    def flee(self, other):
+        """
+        By running away the other entity wins automatically
+
+        Args:
+            other (Entity): other entity that will win after this action
+        """
+        print(f"{color.MAGENTA}{self.name} {color.RED}flee. {color.MAGENTA}{other.name} {color.GREEN}won!!{color.RESET}")
+        self.alive = False
+
+    def make_decision(self, other, rounds_played:int):
+        """
+        Let this Entity choose his next action based on the amount off
+        rounds played and the other Entity
+
+        Args:
+            other (Entity): the entity this entity is fighting against
+            rounds_played (int): how many rounds are played already
+        """
+        self.attack(other) # for now just attack, but here could be a algorithm to play intelligent against the other
+
+    def show_stat(self):
+        print(f"{color.MAGENTA}{self.name} {color.GREEN}has {color.YELLOW}{self.health} {color.GREEN}health and {color.YELLOW}{self.power} {color.GREEN}power.{color.RESET}")
 
 def ask_for_action(hero:Entity, goblin:Entity) -> str:
     """
@@ -48,33 +87,37 @@ def ask_for_action(hero:Entity, goblin:Entity) -> str:
     Returns:
         str: user action
     """
-    print("You have %d health and %d power." % hero.stats)
-    print("The goblin has %d health and %d power." % goblin.stats)
+    hero.show_stat()
+    goblin.show_stat()
     print()
-    print("What do you want to do?")
-    print("1. fight goblin")
-    print("2. do nothing")
-    print("3. flee")
-    return input("> ")
+    print(f"{color.CYAN}What do you want to do?{color.RESET}")
+    print(f"{color.RED}1. fight goblin{color.RESET}")
+    print(f"{color.YELLOW}2. do nothing{color.RESET}")
+    print(f"{color.LIGHTBLUE_EX}3. flee{color.RESET}")
+    user_input = input(color.MAGENTA+"> "+color.CYAN)
+    print(color.RESET, end="\r")
+    return user_input
 
 def main():
+    rounds_played = 0
     hero = Entity("Hero", 10, 5)
-    goblin = Entity("Goblin", 6, 2)
+    goblin = Entity("Goblin", random.randint(2, 13), random.randint(1, 3))
 
     while goblin.alive and hero.alive:
         user_input = ask_for_action(hero, goblin)
         if user_input == "1":
             hero.attack(goblin)
         elif user_input == "2":
-            pass
+            hero.do_nothing(goblin)
         elif user_input == "3":
-            print("Goodbye.")
+            hero.flee(goblin)
             break
         else:
             print("Invalid input %r" % user_input)
 
-        if goblin.alive:
-            goblin.attack(hero)
+        goblin.make_decision(hero, rounds_played)
+
+        rounds_played += 1
 
 if __name__ == "__main__":
     main()
