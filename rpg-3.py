@@ -28,7 +28,7 @@ green_knight = Goblin(6, 2)
 
 def main():
 
-    while green_knight.alive() > 0 and gawain.alive() > 0:
+    while green_knight.alive() and gawain.alive():
         print("You have %d health and %d power." %
               (gawain.health, gawain.power))
         print("The goblin has %d health and %d power." %
